@@ -36,6 +36,7 @@ if 'suggestions_list' not in st.session_state:
 if 'user_description' not in st.session_state:
     st.session_state.user_description = ""
 
+
 # --- FUNCIONES AUXILIARES ---
 def change_page(page_name):
     st.session_state.page = page_name
@@ -62,12 +63,9 @@ def call_gemini_api(user_description):
         st.error(f"Ocurrió un error al contactar con la IA: {e}")
         return None
 
-# --- FUNCIÓN DE KEYWORDS MEJORADA ---
 def call_gemini_for_keywords(business_type, user_description):
     """Llama a la IA para sugerir keywords de filtrado específicas."""
     model = genai.GenerativeModel('gemini-1.5-flash-latest')
-    
-    # --- PROMPT REESCRITO CON REGLAS ESTRICTAS ---
     prompt = f"""
     Eres un analista de datos especializado en encontrar clientes. Tu objetivo es identificar las palabras conceptuales más comunes y relevantes.
 
@@ -90,7 +88,6 @@ def call_gemini_for_keywords(business_type, user_description):
     **Formato de Salida:**
     Dame únicamente la lista de palabras clave en minúsculas, separadas por comas. Sin explicaciones.
     """
-    
     try:
         response = model.generate_content(prompt)
         return response.text.strip()
@@ -166,9 +163,13 @@ elif st.session_state.page == 'ai_help':
 elif st.session_state.page == 'ai_results_to_search':
     st.header("🎯 Perfecciona tu Búsqueda")
     
-    selected_business = st.selectbox(
+    # --- CAMBIO 1: CREAMOS UNA NUEVA LISTA CON LA OPCIÓN "TODAS" AL PRINCIPIO ---
+    opcion_todas = "Buscar en todas las categorías sugeridas"
+    opciones_display = [opcion_todas] + st.session_state.suggestions_list
+    
+    selected_option = st.selectbox(
         "Elige el tipo de negocio que quieres buscar:",
-        options=st.session_state.suggestions_list
+        options=opciones_display  # Usamos la nueva lista de opciones
     )
     
     location = st.text_input("Ubicación (Ciudad, País)", placeholder="Ej: Barcelona, España")
@@ -181,19 +182,26 @@ elif st.session_state.page == 'ai_results_to_search':
     keywords = st.text_input("Keywords (separadas por comas)", placeholder="pienso, alimento, natural...")
 
     if st.button("🤖 Ayúdame a encontrar keywords"):
-        if selected_business and st.session_state.user_description:
-            with st.spinner(f"Buscando keywords para '{selected_business}'..."):
-                suggested_keywords = call_gemini_for_keywords(selected_business, st.session_state.user_description)
+        # La lógica para generar keywords solo tiene sentido si se elige UNA categoría
+        if selected_option != opcion_todas and st.session_state.user_description:
+            with st.spinner(f"Buscando keywords para '{selected_option}'..."):
+                suggested_keywords = call_gemini_for_keywords(selected_option, st.session_state.user_description)
                 if suggested_keywords:
                     st.success("¡Sugerencia de keywords generada!")
                     st.code(suggested_keywords)
+        elif selected_option == opcion_todas:
+            st.warning("Para sugerir keywords, por favor, elige una categoría específica de la lista.")
         else:
             st.warning("Asegúrate de haber descrito tu empresa y elegido un tipo de negocio.")
 
     st.markdown("---")
 
     if st.button("Buscar Leads y Generar Excel", type="primary"):
-        st.success(f"¡Funcionalidad en desarrollo! Se buscarían '{selected_business}' en '{location}' con las keywords '{keywords}'.")
+        # --- CAMBIO 2: ADAPTAMOS EL MENSAJE SEGÚN LA OPCIÓN ELEGIDA ---
+        if selected_option == opcion_todas:
+            st.success(f"¡Funcionalidad en desarrollo! Se buscarían **TODAS** las categorías sugeridas en '{location}' con las keywords '{keywords}'.")
+        else:
+            st.success(f"¡Funcionalidad en desarrollo! Se buscarían '{selected_option}' en '{location}' con las keywords '{keywords}'.")
 
     if st.button("⬅️ Volver a las opciones"):
         change_page('choice')
