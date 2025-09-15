@@ -33,10 +33,8 @@ if 'page' not in st.session_state:
     st.session_state.page = 'home'
 if 'suggestions_list' not in st.session_state:
     st.session_state.suggestions_list = []
-# --- NUEVO ESTADO ---: Guardaremos la descripción del usuario aquí
 if 'user_description' not in st.session_state:
     st.session_state.user_description = ""
-
 
 # --- FUNCIONES AUXILIARES ---
 def change_page(page_name):
@@ -68,28 +66,31 @@ def call_gemini_api(user_description):
 def call_gemini_for_keywords(business_type, user_description):
     """Llama a la IA para sugerir keywords de filtrado específicas."""
     model = genai.GenerativeModel('gemini-1.5-flash-latest')
+    
+    # --- PROMPT REESCRITO CON REGLAS ESTRICTAS ---
     prompt = f"""
-    Eres un experto en marketing y generación de leads. Tu tarea es generar keywords específicas para filtrar.
+    Eres un analista de datos especializado en encontrar clientes. Tu objetivo es identificar las palabras conceptuales más comunes y relevantes.
 
     **Contexto:**
-    - Mi empresa se dedica a esto: "{user_description}"
-    - Quiero encontrar clientes que son de este tipo de negocio: "{business_type}"
-
-    **Instrucciones:**
-    Basándote en lo que vende mi empresa, sugiere 5 a 7 palabras clave (keywords) específicas que probablemente aparecerían en la descripción de un "{business_type}" que sería un cliente ideal para mí.
-    Estas keywords deben ser términos de productos, servicios o marcas que mi cliente ideal vendería o usaría. NO deben ser palabras genéricas.
-
-    **Ejemplo MUY IMPORTANTE:**
-    - Si mi empresa vende "pienso para mascotas de alta calidad", y busco "Tiendas de mascotas"...
-    - **Keywords BUENAS:** pienso, alimento, nutrición, natural, sin cereales, premium, ecológico
-    - **Keywords MALAS (demasiado genéricas):** mascotas, perros, gatos, tienda, accesorios
-
-    **Formato de salida:**
-    Dame únicamente una lista de palabras clave en minúsculas, separadas por comas. Sin explicaciones ni adornos.
+    - Mi empresa vende: "{user_description}"
+    - Busco este tipo de cliente: "{business_type}"
 
     **Tu Tarea:**
-    Genera las keywords para el contexto proporcionado.
+    Genera una lista de 5 a 7 palabras clave para filtrar. Estas palabras deben cumplir OBLIGATORIAMENTE las siguientes reglas:
+
+    **Regla 1: UNA SOLA PALABRA.** Cada keyword debe ser una única palabra (ej. 'pienso' está bien, 'pienso natural' NO).
+    **Regla 2: SIN MARCAS.** No incluyas nombres de marcas comerciales (ej. 'Royal Canin', 'Hills').
+    **Regla 3: CONCEPTOS, NO PRODUCTOS ESPECÍFICOS.** Busca palabras que representen una categoría (ej. 'alimento'), no un producto ultra-específico (ej. 'dieta de prescripción').
+
+    **Ejemplo Práctico:**
+    - Si mi empresa vende "pienso para mascotas de alta calidad", y busco "Tiendas de mascotas"...
+    - **Keywords CORRECTAS:** pienso, alimento, nutrición, comida, natural, premium, ecológico
+    - **Keywords INCORRECTAS:** pienso veterinario, royal canin, dieta para perros
+
+    **Formato de Salida:**
+    Dame únicamente la lista de palabras clave en minúsculas, separadas por comas. Sin explicaciones.
     """
+    
     try:
         response = model.generate_content(prompt)
         return response.text.strip()
@@ -137,7 +138,6 @@ elif st.session_state.page == 'ai_help':
     user_description = st.text_area("Describe tu empresa aquí:", height=150, placeholder="Ej: Vendemos piensos y accesorios de alta gama para mascotas...")
     if st.button("Generar ideas de negocio", type="primary"):
         if user_description:
-            # --- GUARDAMOS LA DESCRIPCIÓN ---
             st.session_state.user_description = user_description
             with st.spinner("La IA está analizando tu empresa..."):
                 suggestions_text = call_gemini_api(user_description)
@@ -157,7 +157,6 @@ elif st.session_state.page == 'ai_help':
             st.rerun()
 
     if st.button("⬅️ Volver a elegir"):
-        # Limpiamos los datos de la sesión al volver
         st.session_state.suggestions_list = []
         st.session_state.user_description = ""
         change_page('choice')
@@ -184,7 +183,6 @@ elif st.session_state.page == 'ai_results_to_search':
     if st.button("🤖 Ayúdame a encontrar keywords"):
         if selected_business and st.session_state.user_description:
             with st.spinner(f"Buscando keywords para '{selected_business}'..."):
-                # --- LLAMAMOS A LA FUNCIÓN MEJORADA ---
                 suggested_keywords = call_gemini_for_keywords(selected_business, st.session_state.user_description)
                 if suggested_keywords:
                     st.success("¡Sugerencia de keywords generada!")
