@@ -56,7 +56,7 @@ if st.session_state.page == 'home':
     # Centrar el logo
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.image("dpi.jpg")
+    st.image("dpi.jpg", use_column_width=True)
 
     # Centrar el texto
     st.markdown("<h1 style='text-align: center;'>Generador de Leads con IA 🚀</h1>", unsafe_allow_html=True)
