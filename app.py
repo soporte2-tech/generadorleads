@@ -163,16 +163,15 @@ elif st.session_state.page == 'ai_help':
 elif st.session_state.page == 'ai_results_to_search':
     st.header("🎯 Perfecciona tu Búsqueda")
     
-    # --- CAMBIO 1: CREAMOS UNA NUEVA LISTA CON LA OPCIÓN "TODAS" AL PRINCIPIO ---
     opcion_todas = "Buscar en todas las categorías sugeridas"
     opciones_display = [opcion_todas] + st.session_state.suggestions_list
     
     selected_option = st.selectbox(
         "Elige el tipo de negocio que quieres buscar:",
-        options=opciones_display  # Usamos la nueva lista de opciones
+        options=opciones_display
     )
     
-    location = st.text_input("Ubicación (Ciudad, País)", placeholder="Ej: Barcelona, España")
+    location = st.text_input("Ubicación (Ciudad, País)", placeholder="Ej: España")
 
     st.markdown("---")
 
@@ -181,23 +180,38 @@ elif st.session_state.page == 'ai_results_to_search':
     
     keywords = st.text_input("Keywords (separadas por comas)", placeholder="pienso, alimento, natural...")
 
+    # --- INICIO DE LA LÓGICA CORREGIDA ---
     if st.button("🤖 Ayúdame a encontrar keywords"):
-        # La lógica para generar keywords solo tiene sentido si se elige UNA categoría
-        if selected_option != opcion_todas and st.session_state.user_description:
-            with st.spinner(f"Buscando keywords para '{selected_option}'..."):
-                suggested_keywords = call_gemini_for_keywords(selected_option, st.session_state.user_description)
+        # Determinamos qué categoría usar para la IA
+        target_business_for_keywords = ""
+        is_example = False
+
+        if selected_option != opcion_todas:
+            # Si el usuario eligió una, la usamos
+            target_business_for_keywords = selected_option
+        elif st.session_state.suggestions_list:
+            # Si eligió "todas", usamos la primera de la lista como ejemplo
+            target_business_for_keywords = st.session_state.suggestions_list[0]
+            is_example = True
+
+        # Procedemos si tenemos una categoría objetivo y la descripción de la empresa
+        if target_business_for_keywords and st.session_state.user_description:
+            with st.spinner(f"Buscando keywords para '{target_business_for_keywords}'..."):
+                suggested_keywords = call_gemini_for_keywords(target_business_for_keywords, st.session_state.user_description)
                 if suggested_keywords:
                     st.success("¡Sugerencia de keywords generada!")
                     st.code(suggested_keywords)
-        elif selected_option == opcion_todas:
-            st.warning("Para sugerir keywords, por favor, elige una categoría específica de la lista.")
+                    # Si usamos un ejemplo, se lo decimos al usuario para que no haya confusión
+                    if is_example:
+                        st.info(f"Nota: Las keywords se han generado usando '{target_business_for_keywords}' como ejemplo.")
         else:
-            st.warning("Asegúrate de haber descrito tu empresa y elegido un tipo de negocio.")
+            # Mensaje de error si falta la descripción de la empresa
+            st.warning("Para sugerir keywords, es necesario que hayas descrito tu empresa en el paso anterior.")
+    # --- FIN DE LA LÓGICA CORREGIDA ---
 
     st.markdown("---")
 
     if st.button("Buscar Leads y Generar Excel", type="primary"):
-        # --- CAMBIO 2: ADAPTAMOS EL MENSAJE SEGÚN LA OPCIÓN ELEGIDA ---
         if selected_option == opcion_todas:
             st.success(f"¡Funcionalidad en desarrollo! Se buscarían **TODAS** las categorías sugeridas en '{location}' con las keywords '{keywords}'.")
         else:
