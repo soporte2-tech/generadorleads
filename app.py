@@ -57,7 +57,7 @@ def call_gemini_api(user_description):
 
 # Página 1: Landing Page
 if st.session_state.page == 'home':
-    st.image("https://streamlit.io/images/brand/streamlit-logo-secondary-colormark-darktext.png", width=200) # Reemplaza con la URL de tu logo
+    st.image("dpi.jpg", width=200)
     st.title("Generador de Leads con IA 🚀")
     st.markdown("Potencia tu negocio encontrando los clientes perfectos para ti.")
     
