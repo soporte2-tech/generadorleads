@@ -53,23 +53,34 @@ def call_gemini_api(user_description):
 
 # Página 1: Landing Page
 if st.session_state.page == 'home':
-    # Centrar el logo
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-       st.image("dpi.jpg", use_column_width=True)
+    # --- INICIO DE LA SOLUCIÓN DEFINITIVA DE CENTRADO ---
 
-    # Centrar el texto
+    # 1. Centrar el logo con control de tamaño usando HTML/CSS dentro de Markdown.
+    #    - Le damos un ancho fijo de 200px (puedes cambiarlo).
+    #    - 'display: block' y 'margin: auto' son el truco CSS estándar para centrar imágenes.
+    st.markdown(
+        f"""
+        <div style="text-align: center;">
+            <img src="data:image/jpeg;base64,{base64.b64encode(open("dpi.jpg", "rb").read()).decode()}" alt="DPI Logo" width="200">
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # 2. Centrar el texto (esto ya estaba bien).
     st.markdown("<h1 style='text-align: center;'>Generador de Leads con IA 🚀</h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center;'>Potencia tu negocio encontrando los clientes perfectos para ti.</p>", unsafe_allow_html=True)
     
     st.write("") # Espacio en blanco
     
-    # Centrar el botón
+    # 3. Centrar el botón (el truco de las columnas funciona perfecto para botones).
     col1_btn, col2_btn, col3_btn = st.columns([1, 2, 1])
     with col2_btn:
         if st.button("✨ ¡Comenzar ahora!", use_container_width=True, type="primary"):
             change_page('choice')
             st.rerun()
+
+    # --- FIN DE LA SOLUCIÓN ---
 
 # Página 2: Página de Elección
 elif st.session_state.page == 'choice':
