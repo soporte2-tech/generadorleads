@@ -40,7 +40,7 @@ def change_page(page_name):
 
 def call_gemini_api(user_description):
     """Función para llamar a la API de Gemini y obtener sugerencias."""
-    model = genai.GenerativeModel('gemini-pro')
+    model = genai.GenerativeModel('gemini-1.5-flash-latest')
     prompt = f"""
     Basado en la siguiente descripción de una empresa, necesito que sugieras 5 tipos de negocios específicos que serían clientes potenciales ideales.
     Tu respuesta debe ser una lista clara y concisa en formato de puntos. No añadas explicaciones extra.
